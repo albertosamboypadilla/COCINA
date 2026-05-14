@@ -3,6 +3,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Environment, Grid, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { CabinetConfig } from '../types';
+import { toFraction } from '../lib/cabinetLogic';
 
 interface PieceProps {
   position: [number, number, number];
@@ -172,7 +173,7 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
               <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
                 <div className={`${isB ? 'bg-red-600 border-red-400' : 'bg-blue-600 border-blue-400'} border px-1.5 py-0.5 rounded shadow-[0_0_15px_rgba(59,130,246,0.5)] flex items-center gap-1`}>
                   <span className="text-[10px] font-mono font-black text-white whitespace-nowrap">
-                    {dist.toFixed(3)}"
+                    {toFraction(dist)}"
                   </span>
                 </div>
                 <div className={`w-[200%] h-[1px] ${isB ? 'bg-red-500/50' : 'bg-blue-500/50'} absolute -top-2 left-1/2 -translate-x-1/2 flex justify-between px-0.5`}>
@@ -188,59 +189,125 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
       {/* Dimension Labels */}
       <Html position={[0, -h/2 - 2, d/2]} center>
         <div className="bg-blue-600 px-2 py-0.5 rounded text-[10px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
-          ANCHO: {width}"
+          ANCHO: {toFraction(width)}"
         </div>
       </Html>
       <Html position={[w/2 + 2, 0, d/2]} center>
         <div className="bg-emerald-600 px-2 py-0.5 rounded text-[10px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
-          ALTO: {height}"
+          ALTO: {toFraction(height)}"
         </div>
       </Html>
       <Html position={[-w/2, -h/2, 0]} center>
         <div className="bg-amber-600 px-2 py-0.5 rounded text-[10px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
-          SALIDA: {depth}"
+          SALIDA: {toFraction(depth)}"
         </div>
       </Html>
 
       {/* Doors */}
-      {showDoors && numDoors > 0 && Array.from({ length: numDoors }).map((_, i) => {
-        // Match breakdown logic: (W - 2T - 0.25*numDoors) / numDoors
-        const doorWidth = (width - (2 * t) - (0.25 * numDoors)) / numDoors;
-        // Match breakdown logic: H - T - 1
-        const doorHeight = h - t - 1;
-        
-        // Center of each opening in the uniform distribution
-        const x = -w/2 + t + i * doorOpeningWidth + i * t + doorOpeningWidth/2;
-        
-        // The door opening center is 0 (since group is at h/2).
-        // If doorHeight is H-T-1, and it's positioned centered on the opening.
-        // Opening is between -h/2 + t and h/2 - t. Center is 0.
-        // Let's keep it centered on y=0 relative to the cabinet height group.
-        
-        return (
-          <group key={i} position={[x, 0, d/2 + t/5]}>
-            {/* Door Frame (Simple blue outline to represent the door unit) */}
-            <Piece position={[0, doorHeight/2 - t/4, 0]} size={[doorWidth, t/2, t/2]} color="#60a5fa" opacity={0.9} name="DoorTop" />
-            <Piece position={[0, -doorHeight/2 + t/4, 0]} size={[doorWidth, t/2, t/2]} color="#60a5fa" opacity={0.9} name="DoorBottom" />
-            <Piece position={[-doorWidth/2 + t/4, 0, 0]} size={[t/2, doorHeight, t/2]} color="#60a5fa" opacity={0.9} name="DoorLeft" />
-            <Piece position={[doorWidth/2 - t/4, 0, 0]} size={[t/2, doorHeight, t/2]} color="#60a5fa" opacity={0.9} name="DoorRight" />
-            
-            {/* Glass panel */}
-            <Piece position={[0, 0, 0]} size={[doorWidth - t, doorHeight - t, 0.1]} color="#93c5fd" opacity={0.3} name="DoorGlass" />
+      {showDoors && numDoors > 0 && (() => {
+        const sideGap = 0.25;
+        const doorHeight = h - (2 * t) + 0.75;
+        const dt = 2;
 
-            <Html position={[0, 0, 0.2]} center>
-              <div className="flex flex-col items-center gap-1">
-                <div className="bg-blue-600/80 backdrop-blur-sm text-white font-bold text-[8px] px-1.5 py-0.5 rounded-full border border-blue-400">
-                  {i + 1}
-                </div>
-                <div className="bg-slate-900/90 text-blue-300 text-[6px] font-mono px-1 rounded border border-blue-500/20 whitespace-nowrap">
-                  {doorWidth.toFixed(3)}" x {doorHeight.toFixed(3)}"
-                </div>
-              </div>
-            </Html>
-          </group>
-        );
-      })}
+        const frontStileX = [
+          -w/2 + t/2,
+          ...intermediatePosts.filter(p => !p.isBack).map(p => p.pos[0]),
+          w/2 - t/2
+        ].sort((a, b) => a - b);
+
+        const doorGroups = [];
+        let doorCount = 0;
+
+        for (let j = 0; j < frontStileX.length - 1; j++) {
+          const xStart = frontStileX[j] + t/2;
+          const xEnd = frontStileX[j+1] - t/2;
+          const openingW = xEnd - xStart;
+          
+          // Number of doors in this opening (2 if more left, 1 if only 1 left)
+          const doorsInOpening = Math.min(2, numDoors - doorCount);
+          const totalGap = 2 * sideGap;
+          const dWidth = (openingW - totalGap) / doorsInOpening;
+
+          for (let k = 0; k < doorsInOpening; k++) {
+            doorCount++;
+            // If 2 doors, they meet in the middle (no gap between them)
+            // Left door: from xStart + sideGap to xStart + sideGap + dWidth
+            // Right door: from xEnd - sideGap - dWidth to xEnd - sideGap
+            let doorX: number;
+            if (doorsInOpening === 2) {
+              if (k === 0) { // Left door
+                doorX = xStart + sideGap + dWidth/2;
+              } else { // Right door
+                doorX = xEnd - sideGap - dWidth/2;
+              }
+            } else {
+              // Single door center
+              doorX = (xStart + xEnd) / 2;
+            }
+
+            doorGroups.push(
+              <group key={`door-${doorCount}`} position={[doorX, 0, d/2 + t/5]}>
+                {/* Door Frame */}
+                <Piece position={[0, doorHeight/2 - dt/2, 0]} size={[dWidth, dt, t/3]} color="#60a5fa" opacity={0.9} name="DoorTop" />
+                <Piece position={[0, -doorHeight/2 + dt/2, 0]} size={[dWidth, dt, t/3]} color="#60a5fa" opacity={0.9} name="DoorBottom" />
+                <Piece position={[-dWidth/2 + dt/2, 0, 0]} size={[dt, doorHeight, t/3]} color="#60a5fa" opacity={0.9} name="DoorLeft" />
+                <Piece position={[dWidth/2 - dt/2, 0, 0]} size={[dt, doorHeight, t/3]} color="#60a5fa" opacity={0.9} name="DoorRight" />
+                
+                {/* Glass panel */}
+                <Piece position={[0, 0, 0]} size={[dWidth - 2*dt, doorHeight - 2*dt, 0.1]} color="#93c5fd" opacity={0.3} name="DoorGlass" />
+                
+                {/* Glass Reflection Lines */}
+                <group position={[0, 0, 0.06]}>
+                  <mesh rotation={[0, 0, Math.PI / 4]}>
+                    <planeGeometry args={[dWidth * 0.6, 0.05]} />
+                    <meshBasicMaterial color="white" opacity={0.2} transparent />
+                  </mesh>
+                  <mesh position={[dWidth * 0.1, dWidth * 0.1, 0]} rotation={[0, 0, Math.PI / 4]}>
+                    <planeGeometry args={[dWidth * 0.4, 0.03]} />
+                    <meshBasicMaterial color="white" opacity={0.15} transparent />
+                  </mesh>
+                </group>
+
+                {/* Hinges */}
+                {(doorsInOpening === 1 || (doorsInOpening === 2 && k === 0)) ? (
+                  // Hinge on the left
+                  <>
+                    <Piece position={[-dWidth/2, doorHeight * 0.25, -t/10]} size={[0.5, 1, 0.5]} color="#94a3b8" name="HingeUL" />
+                    <Piece position={[-dWidth/2, -doorHeight * 0.25, -t/10]} size={[0.5, 1, 0.5]} color="#94a3b8" name="HingeLL" />
+                  </>
+                ) : (
+                  // Hinge on the right
+                  <>
+                    <Piece position={[dWidth/2, doorHeight * 0.25, -t/10]} size={[0.5, 1, 0.5]} color="#94a3b8" name="HingeUR" />
+                    <Piece position={[dWidth/2, -doorHeight * 0.25, -t/10]} size={[0.5, 1, 0.5]} color="#94a3b8" name="HingeLR" />
+                  </>
+                )}
+
+                {/* Handles (Tiradores) - opposite to hinges */}
+                {(doorsInOpening === 1 || (doorsInOpening === 2 && k === 0)) ? (
+                  // Handle on the right for left-hinged door
+                  <Piece position={[dWidth/2 - 1, 0, 0.2]} size={[0.2, 3, 0.2]} color="white" name="HandleR" />
+                ) : (
+                  // Handle on the left for right-hinged door
+                  <Piece position={[-dWidth/2 + 1, 0, 0.2]} size={[0.2, 3, 0.2]} color="white" name="HandleL" />
+                )}
+    
+                <Html position={[0, 0, 0.2]} center>
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="bg-blue-600/80 backdrop-blur-sm text-white font-bold text-[8px] px-1.5 py-0.5 rounded-full border border-blue-400">
+                      {doorCount}
+                    </div>
+                    <div className="bg-slate-900/90 text-blue-300 text-[6px] font-mono px-1 rounded border border-blue-500/20 whitespace-nowrap">
+                      {toFraction(dWidth)}" x {toFraction(doorHeight)}"
+                    </div>
+                  </div>
+                </Html>
+              </group>
+            );
+          }
+        }
+        return doorGroups;
+      })()}
     </group>
   );
 }
@@ -254,7 +321,7 @@ export default function Cabinet3D({ config }: { config: CabinetConfig }) {
       <div className="absolute top-4 left-4 z-10 flex gap-2">
         <div className="bg-slate-800/80 backdrop-blur-sm p-2 rounded border border-slate-700 text-[10px] text-blue-400 font-mono text-center">
           ESTRUCTURA ESCALADA (INCH)<br/>
-          {config.width}" x {config.height}" x {config.depth}"
+          {toFraction(config.width)}" x {toFraction(config.height)}" x {toFraction(config.depth)}"
         </div>
       </div>
       <Canvas shadows camera={{ position: [cameraDist * 0.7, cameraDist * 0.7, cameraDist], fov: 45 }}>

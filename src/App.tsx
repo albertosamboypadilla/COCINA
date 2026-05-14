@@ -67,7 +67,7 @@ const GenericNumberInput = ({ value, onChange, className, step, min }: { value: 
   );
 };
 
-import { calculateCutList } from './lib/cabinetLogic';
+import { calculateCutList, toFraction } from './lib/cabinetLogic';
 
 export default function App() {
   const [config, setConfig] = useState<CabinetConfig>({
@@ -201,7 +201,7 @@ export default function App() {
                         {piece.material && <div className="text-[9px] text-slate-500 font-mono leading-none">{piece.material}</div>}
                       </div>
                       <div className="col-span-4 text-right text-xs font-mono font-bold text-emerald-400">
-                        {piece.length.toFixed(3)}"
+                        {toFraction(piece.length)}"
                       </div>
                     </div>
                   ))}
