@@ -41,6 +41,7 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
   const d = depth;
   const t = thickness;
   const g = gap;
+  const sideGap = 0.25;
 
   // Annex variables
   const annexEnabled = annex?.enabled;
@@ -211,7 +212,6 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
 
       {/* Doors */}
       {showDoors && numDoors > 0 && (() => {
-        const sideGap = 0.25;
         const doorHeight = h - (2 * t) + 0.75;
         const dt = 2;
 
@@ -379,37 +379,110 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
                 />
               ))}
 
+              {/* Annex Intermediate Stiles (Always visible) */}
+              {annexNumDoors > 1 && (() => {
+                const unionZ = d - t/2;
+                const availableLength = al - unionZ - t;
+                if (availableLength <= 0) return null;
+                const numOpenings = Math.ceil(annexNumDoors / 2);
+                const numIntermediateStiles = Math.floor((annexNumDoors - 1) / 2);
+                const totalStileWidth = numIntermediateStiles * t;
+                const totalGaps = (annexNumDoors > 0) ? (annexNumDoors * 2 * sideGap) : 0;
+                
+                // Effective width for all doors combined
+                const netDoorWidthTotal = availableLength - totalStileWidth - totalGaps;
+                const dw = netDoorWidthTotal / annexNumDoors;
+
+                const stiles = [];
+                // Intermediate stiles for annex (every 2 doors)
+                for (let i = 1; i < numOpenings; i++) {
+                  // Position is after i openings (each opening has 2 doors)
+                  const z = unionZ + (i * 2 * (dw + 2 * sideGap)) + (i - 0.5) * t;
+                  stiles.push(
+                    <Piece 
+                      key={`annex-stile-${i}`} 
+                      position={[0, 0, z]} 
+                      size={[t, h - 2*t, t]} 
+                      color="#64748b" 
+                      name="AnnexIntermediateStile" 
+                    />
+                  );
+                }
+                return stiles;
+              })()}
+
               {/* Annex Doors (Inner Side facing center) */}
               {showDoors && annexNumDoors > 0 && (() => {
-                const doorGroups = [];
-                const sideGap = 0.25;
                 const adt = 2; // Door profile
                 const doorHeight = h - (2 * t) + 0.75;
-                
-                // The "union" area of the L-shape with the main cabinet side
-                // Main cabinet ends at world z = d/2. Group starts at world z = -d/2 + t/2.
-                // So union ends at local z = d - t/2.
                 const unionZ = d - t/2;
-                
-                // Available length for doors is from unionZ to front posts
                 const availableLength = al - unionZ - t;
-                
                 if (availableLength <= 0) return null;
 
-                const totalDoorLength = availableLength - (2 * sideGap);
-                const doorW = totalDoorLength / annexNumDoors;
+                const numOpenings = Math.ceil(annexNumDoors / 2);
+                const numIntermediateStiles = Math.floor((annexNumDoors - 1) / 2);
+                const totalStileWidth = numIntermediateStiles * t;
+                const totalGaps = annexNumDoors * 2 * sideGap;
+                const dw = (availableLength - totalStileWidth - totalGaps) / annexNumDoors;
 
-                for (let i = 0; i < annexNumDoors; i++) {
-                  const zPos = unionZ + sideGap + doorW/2 + i * doorW;
-                  doorGroups.push(
-                    <group key={`annex-door-${i}`} position={[t/10 * -sideMult, 0, zPos]} rotation={[0, sideMult * Math.PI/2, 0]}>
-                      <Piece position={[0, doorHeight/2 - adt/2, 0]} size={[doorW, adt, t/3]} color="#c084fc" opacity={0.8} name="ADoorTop" />
-                      <Piece position={[0, -doorHeight/2 + adt/2, 0]} size={[doorW, adt, t/3]} color="#c084fc" opacity={0.8} name="ADoorBottom" />
-                      <Piece position={[-doorW/2 + adt/2, 0, 0]} size={[adt, doorHeight, t/3]} color="#c084fc" opacity={0.8} name="ADoorLeft" />
-                      <Piece position={[doorW/2 - adt/2, 0, 0]} size={[adt, doorHeight, t/3]} color="#c084fc" opacity={0.8} name="ADoorRight" />
-                      <Piece position={[0, 0, 0]} size={[doorW - 2*adt, doorHeight - 2*adt, 0.1]} color="#e9d5ff" opacity={0.3} name="ADoorGlass" />
-                    </group>
-                  );
+                const doorGroups = [];
+                let annexDoorCount = numDoors; // Start counting after main cabinet doors
+                for (let j = 0; j < numOpenings; j++) {
+                  const doorsInOpening = Math.min(2, annexNumDoors - (annexDoorCount - numDoors));
+                  const zStartOfOpening = unionZ + j * (2 * (dw + 2 * sideGap) + t);
+
+                  for (let k = 0; k < doorsInOpening; k++) {
+                    annexDoorCount++;
+                    const zPos = zStartOfOpening + sideGap + dw/2 + k * (dw + 2 * sideGap);
+
+                    doorGroups.push(
+                      <group key={`annex-door-${annexDoorCount}`} position={[t/10 * -sideMult, 0, zPos]} rotation={[0, sideMult * Math.PI/2, 0]}>
+                        <Piece position={[0, doorHeight/2 - adt/2, 0]} size={[dw, adt, t/3]} color="#60a5fa" opacity={0.9} name="ADoorTop" />
+                        <Piece position={[0, -doorHeight/2 + adt/2, 0]} size={[dw, adt, t/3]} color="#60a5fa" opacity={0.9} name="ADoorBottom" />
+                        <Piece position={[-dw/2 + adt/2, 0, 0]} size={[adt, doorHeight, t/3]} color="#60a5fa" opacity={0.9} name="ADoorLeft" />
+                        <Piece position={[dw/2 - adt/2, 0, 0]} size={[adt, doorHeight, t/3]} color="#60a5fa" opacity={0.9} name="ADoorRight" />
+                        <Piece position={[0, 0, 0]} size={[dw - 2*adt, doorHeight - 2*adt, 0.1]} color="#93c5fd" opacity={0.3} name="ADoorGlass" />
+
+                        {/* Reflection Lines */}
+                        <group position={[0, 0, 0.06]}>
+                          <mesh rotation={[0, 0, Math.PI / 4]}>
+                            <planeGeometry args={[dw * 0.6, 0.05]} />
+                            <meshBasicMaterial color="white" opacity={0.2} transparent />
+                          </mesh>
+                        </group>
+                        
+                        {/* Annex Hinges (Butterfly style) - Adjusted for L-shape rotation sideMult */}
+                        {((k === 0 && sideMult === -1) || (k === 1 && sideMult === 1)) ? (
+                          <>
+                            {/* Hinge on side closer to back/post */}
+                            <Piece position={[-dw/2 - sideGap, doorHeight * 0.25, -t/10]} size={[0.5, 1, 0.5]} color="#94a3b8" name="AHingeL" />
+                            <Piece position={[-dw/2 - sideGap, -doorHeight * 0.25, -t/10]} size={[0.5, 1, 0.5]} color="#94a3b8" name="AHingeL" />
+                            {/* Handle on opposite side */}
+                            <Piece position={[dw/2 - 1, 0, 0.2]} size={[0.2, 3, 0.2]} color="white" name="AHandle" />
+                          </>
+                        ) : (
+                          <>
+                            {/* Hinge on side closer to front/post */}
+                            <Piece position={[dw/2 + sideGap, doorHeight * 0.25, -t/10]} size={[0.5, 1, 0.5]} color="#94a3b8" name="AHingeR" />
+                            <Piece position={[dw/2 + sideGap, -doorHeight * 0.25, -t/10]} size={[0.5, 1, 0.5]} color="#94a3b8" name="AHingeR" />
+                            {/* Handle on opposite side */}
+                            <Piece position={[-dw/2 + 1, 0, 0.2]} size={[0.2, 3, 0.2]} color="white" name="AHandle" />
+                          </>
+                        )}
+
+                        <Html position={[0, 0, 0.2]} center>
+                          <div className="flex flex-col items-center gap-1">
+                            <div className="bg-blue-600/80 backdrop-blur-sm text-white font-bold text-[8px] px-1.5 py-0.5 rounded-full border border-blue-400">
+                              {annexDoorCount}
+                            </div>
+                            <div className="bg-slate-900/90 text-blue-300 text-[6px] font-mono px-1 rounded border border-blue-500/20 whitespace-nowrap">
+                              {toFraction(dw)}" x {toFraction(doorHeight)}"
+                            </div>
+                          </div>
+                        </Html>
+                      </group>
+                    );
+                  }
                 }
                 return doorGroups;
               })()}
@@ -462,27 +535,99 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
                 <Piece key={`adr-p-${i}`} position={pos as [number, number, number]} size={[t, t, ad - 2*t]} color="#cbd5e1" name="AnnexDepthRailP" />
               ))}
 
+              {/* Annex Intermediate Stiles Parallel (Always visible) */}
+              {annexNumDoors > 1 && (() => {
+                const numOpenings = Math.ceil(annexNumDoors / 2);
+                const numIntermediateStiles = Math.floor((annexNumDoors - 1) / 2);
+                const totalStileWidth = numIntermediateStiles * t;
+                const totalGaps = annexNumDoors * (2 * sideGap);
+                const availableOpeningW = al - t;
+                const dw = (availableOpeningW - totalStileWidth - totalGaps) / annexNumDoors;
+
+                const stiles = [];
+                // Intermediate stiles
+                for (let i = 1; i < numOpenings; i++) {
+                   const x = -al/2 + t + (i * 2 * (dw + 2 * sideGap)) + (i - 0.5) * t;
+                   stiles.push(
+                     <Piece 
+                       key={`annex-stile-p-${i}`} 
+                       position={[x, 0, ad/2 - t/2]} 
+                       size={[t, h - 2*t, t]} 
+                       color="#64748b" 
+                       name="AnnexStileP" 
+                     />
+                   );
+                }
+                return stiles;
+              })()}
+
               {/* Doors (facing front, starting after the union post) */}
               {showDoors && annexNumDoors > 0 && (() => {
-                const doorGroups = [];
-                const sideGap = 0.25;
                 const adt = 2;
                 const doorHeight = h - (2 * t) + 0.75;
-                // Subtract thickness of inner post (t) and gaps
-                const doorW = (al - t - (2 * sideGap)) / annexNumDoors;
+                const availableOpeningW = al - t;
+                const numOpenings = Math.ceil(annexNumDoors / 2);
+                const numIntermediateStiles = Math.floor((annexNumDoors - 1) / 2);
+                const totalStileWidth = numIntermediateStiles * t;
+                const totalGaps = annexNumDoors * (2 * sideGap);
+                const dw = (availableOpeningW - totalStileWidth - totalGaps) / annexNumDoors;
 
-                for (let i = 0; i < annexNumDoors; i++) {
-                  // Start at -al/2 + t (the inner post thickness)
-                  const xPos = -al/2 + t + sideGap + doorW/2 + i * doorW;
-                  doorGroups.push(
-                    <group key={`annex-door-p-${i}`} position={[xPos, 0, ad/2 + t/5]}>
-                      <Piece position={[0, doorHeight/2 - adt/2, 0]} size={[doorW, adt, t/3]} color="#10b981" opacity={0.8} name="ADoorTopP" />
-                      <Piece position={[0, -doorHeight/2 + adt/2, 0]} size={[doorW, adt, t/3]} color="#10b981" opacity={0.8} name="ADoorBottomP" />
-                      <Piece position={[-doorW/2 + adt/2, 0, 0]} size={[adt, doorHeight, t/3]} color="#10b981" opacity={0.8} name="ADoorLeftP" />
-                      <Piece position={[doorW/2 - adt/2, 0, 0]} size={[adt, doorHeight, t/3]} color="#10b981" opacity={0.8} name="ADoorRightP" />
-                      <Piece position={[0, 0, 0]} size={[doorW - 2*adt, doorHeight - 2*adt, 0.1]} color="#d1fae5" opacity={0.3} name="ADoorGlassP" />
-                    </group>
-                  );
+                const doorGroups = [];
+                let annexDoorCount = numDoors; // Sequential numbering
+                for (let j = 0; j < numOpenings; j++) {
+                  const doorsInOpening = Math.min(2, annexNumDoors - (annexDoorCount - numDoors));
+                  const xStartOfOpening = -al/2 + t + j * (2 * (dw + 2 * sideGap) + t);
+
+                  for (let k = 0; k < doorsInOpening; k++) {
+                    annexDoorCount++;
+                    const xPos = xStartOfOpening + sideGap + dw/2 + k * (dw + 2 * sideGap);
+
+                    doorGroups.push(
+                      <group key={`annex-door-p-${annexDoorCount}`} position={[xPos, 0, ad/2 + t/5]}>
+                        <Piece position={[0, doorHeight/2 - adt/2, 0]} size={[dw, adt, t/3]} color="#60a5fa" opacity={0.9} name="ADoorTopP" />
+                        <Piece position={[0, -doorHeight/2 + adt/2, 0]} size={[dw, adt, t/3]} color="#60a5fa" opacity={0.9} name="ADoorBottomP" />
+                        <Piece position={[-dw/2 + adt/2, 0, 0]} size={[adt, doorHeight, t/3]} color="#60a5fa" opacity={0.9} name="ADoorLeftP" />
+                        <Piece position={[dw/2 - adt/2, 0, 0]} size={[adt, doorHeight, t/3]} color="#60a5fa" opacity={0.9} name="ADoorRightP" />
+                        <Piece position={[0, 0, 0]} size={[dw - 2*adt, doorHeight - 2*adt, 0.1]} color="#93c5fd" opacity={0.3} name="ADoorGlassP" />
+                        
+                        {/* Reflection Lines */}
+                        <group position={[0, 0, 0.06]}>
+                          <mesh rotation={[0, 0, Math.PI / 4]}>
+                            <planeGeometry args={[dw * 0.6, 0.05]} />
+                            <meshBasicMaterial color="white" opacity={0.2} transparent />
+                          </mesh>
+                        </group>
+
+                        {/* Annex Hinges Parallel (Butterfly style) */}
+                        {k === 0 ? (
+                          <>
+                            <Piece position={[-dw/2 - sideGap, doorHeight * 0.25, t/10]} size={[0.5, 1, 0.5]} color="#94a3b8" name="AHingeULP" />
+                            <Piece position={[-dw/2 - sideGap, -doorHeight * 0.25, t/10]} size={[0.5, 1, 0.5]} color="#94a3b8" name="AHingeLLP" />
+                            {/* Handle on right */}
+                            <Piece position={[dw/2 - 1, 0, 0.2]} size={[0.2, 3, 0.2]} color="white" name="AHandlePR" />
+                          </>
+                        ) : (
+                          <>
+                            <Piece position={[dw/2 + sideGap, doorHeight * 0.25, t/10]} size={[0.5, 1, 0.5]} color="#94a3b8" name="AHingeURP" />
+                            <Piece position={[dw/2 + sideGap, -doorHeight * 0.25, t/10]} size={[0.5, 1, 0.5]} color="#94a3b8" name="AHingeLRP" />
+                            {/* Handle on left */}
+                            <Piece position={[-dw/2 + 1, 0, 0.2]} size={[0.2, 3, 0.2]} color="white" name="AHandlePL" />
+                          </>
+                        )}
+
+                        <Html position={[0, 0, 0.2]} center>
+                          <div className="flex flex-col items-center gap-1">
+                            <div className="bg-blue-600/80 backdrop-blur-sm text-white font-bold text-[8px] px-1.5 py-0.5 rounded-full border border-blue-400">
+                              {annexDoorCount}
+                            </div>
+                            <div className="bg-slate-900/90 text-blue-300 text-[6px] font-mono px-1 rounded border border-blue-500/20 whitespace-nowrap">
+                              {toFraction(dw)}" x {toFraction(doorHeight)}"
+                            </div>
+                          </div>
+                        </Html>
+                      </group>
+                    );
+                  }
                 }
                 return doorGroups;
               })()}

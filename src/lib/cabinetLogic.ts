@@ -117,12 +117,13 @@ export function calculateCutList(config: CabinetConfig): CutPiece[] {
       });
     }
 
-    // Intermediate stiles for Annex (if doors > 1)
-    if (annex.numDoors > 1) {
+    // Intermediate stiles for Annex (if doors > 1) - One every 2 doors
+    const numAnnexStiles = Math.floor((annex.numDoors - 1) / 2);
+    if (numAnnexStiles > 0) {
       pieces.push({
         name: `${isL ? 'Anexo' : 'Lateral'}: Postes Intermedios`,
         length: height - (2 * t),
-        quantity: annex.numDoors - 1,
+        quantity: numAnnexStiles,
         material: 'Aluminio 1 3/4"'
       });
     }
@@ -133,16 +134,18 @@ export function calculateCutList(config: CabinetConfig): CutPiece[] {
       const dt = 2; // Door profile
       const doorHeight = height - (2 * t) + 0.75;
       
-      let doorOpeningWidth = 0;
+      let doorOpeningWidthTotal = 0;
       if (isL) {
         const unionZ = depth - t/2;
-        doorOpeningWidth = Math.max(0, al - unionZ - t);
+        doorOpeningWidthTotal = Math.max(0, al - unionZ - t);
       } else {
-        doorOpeningWidth = al - t;
+        doorOpeningWidthTotal = al - t;
       }
 
-      if (doorOpeningWidth > 0) {
-        const doorWidth = (doorOpeningWidth - (2 * sideGap)) / annex.numDoors;
+      if (doorOpeningWidthTotal > 0) {
+        const actualInternalWidth = doorOpeningWidthTotal - (numAnnexStiles * t);
+        const totalGap = (2 * sideGap) * annex.numDoors;
+        const doorWidth = (actualInternalWidth - totalGap) / annex.numDoors;
 
         pieces.push({
           name: `${isL ? 'Anexo' : 'Lateral'}: Marcos Puerta (Vert.)`,
@@ -163,6 +166,13 @@ export function calculateCutList(config: CabinetConfig): CutPiece[] {
           length: doorHeight - (2 * dt),
           quantity: annex.numDoors,
           material: `${toFraction(doorWidth - (2 * dt))}" de ancho`
+        });
+
+        pieces.push({
+          name: `${isL ? 'Anexo' : 'Lateral'}: Bisagras`,
+          length: 0,
+          quantity: annex.numDoors * 2,
+          material: 'Acero Inox.'
         });
       }
     }
