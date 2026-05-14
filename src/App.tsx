@@ -87,13 +87,26 @@ export default function App() {
       {/* Header */}
       <header className="border-bottom border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.4)]">
-              <Box className="text-white" size={24} />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-[#1a2333] rounded-xl flex items-center justify-center border border-slate-700/50 shadow-lg p-1">
+              <div className="flex items-end gap-1 h-full w-full relative">
+                <div className="w-1.5 bg-[#2d4694] h-[60%] rounded-t-sm" />
+                <div className="w-1.5 bg-[#b91c1c] h-[90%] rounded-t-sm" />
+                <div className="ml-0.5 relative flex-1 h-full flex items-center justify-center">
+                  <div className="w-full h-1/2 bg-[#2d4694] rounded-sm relative -bottom-1">
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-[#b91c1c] -translate-y-2 rotate-[-30deg] origin-left" />
+                    <div className="absolute top-0 right-0 w-full h-[2px] bg-[#b91c1c] -translate-y-2 rotate-[30deg] origin-right" />
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-3 bg-white rounded-t-[1px]" />
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-white uppercase">Harmony <span className="text-blue-500">Glass</span></h1>
-              <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">Sistemas de Aluminio y Vidrio</p>
+            <div className="flex flex-col">
+              <h1 className="text-2xl font-[900] italic tracking-tighter uppercase leading-none">
+                <span className="text-[#b91c1c] drop-shadow-[0_2px_1px_rgba(0,0,0,0.8)]">Harmony</span>
+                <span className="text-[#60a5fa] ml-2 drop-shadow-[0_2px_1px_rgba(0,0,0,0.8)]">Glass</span>
+              </h1>
+              <p className="text-[9px] text-slate-500 font-mono uppercase tracking-[0.2em] font-bold mt-1">Sistemas de Aluminio y Vidrio</p>
             </div>
           </div>
           
@@ -175,7 +188,9 @@ export default function App() {
 
       <footer className="mt-12 py-12 border-t border-slate-800 bg-slate-900/30 overflow-hidden relative">
         <div className="max-w-7xl mx-auto px-6 text-center text-slate-500 text-sm">
-          <p>© 2026 HARMONY GLASS • Sistemas de Aluminio y Vidrio</p>
+          <p className="font-bold tracking-tight uppercase">
+            © 2026 <span className="text-[#b91c1c] italic">HARMONY</span> <span className="text-[#60a5fa] italic">GLASS</span> • Sistemas de Aluminio y Vidrio
+          </p>
           <div className="mt-4 flex justify-center gap-6">
             <span className="hover:text-slate-300 cursor-pointer transition-colors">Documentación</span>
             <span className="hover:text-slate-300 cursor-pointer transition-colors">Términos</span>
