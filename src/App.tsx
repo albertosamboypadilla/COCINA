@@ -14,7 +14,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import Cabinet3D from './components/Cabinet3D';
-import { CabinetConfig, Project } from './types';
+import { CabinetConfig, Project, AnnexConfig } from './types';
 
 interface MainDimensionProps {
   label: string;
@@ -172,6 +172,16 @@ export default function App() {
 
   const updateConfig = (key: keyof CabinetConfig, value: any) => {
     setConfig(prev => ({ ...prev, [key]: value }));
+  };
+
+  const updateAnnex = (key: keyof AnnexConfig, value: any) => {
+    setConfig(prev => ({
+      ...prev,
+      annex: {
+        ...(prev.annex || { enabled: false, side: 'right', type: 'l-shape', width: 24, depth: 24, numDoors: 1 }),
+        [key]: value
+      }
+    }));
   };
 
   const cutList = useMemo(() => calculateCutList(config), [config]);
@@ -560,6 +570,106 @@ export default function App() {
                     {config.showDoors ? 'OCULTAR PUERTAS' : 'COLOCAR PUERTAS'}
                   </button>
                 </div>
+
+                {/* Annex Section */}
+                <div className="pt-6 border-t border-slate-800">
+                  <div className="flex items-center justify-between mb-4">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">ANEXO (L-SHAPE)</label>
+                    <button 
+                      onClick={() => updateAnnex('enabled', !config.annex?.enabled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${config.annex?.enabled ? 'bg-blue-600' : 'bg-slate-700'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${config.annex?.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+
+                  {config.annex?.enabled && (
+                    <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
+                      <div className="space-y-2">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Estilo de Anexo</label>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => updateAnnex('type', 'parallel')}
+                            className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase transition-all flex flex-col items-center gap-1 ${config.annex.type === 'parallel' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-800 text-slate-500 hover:bg-slate-700'}`}
+                          >
+                            <Box size={14} />
+                            Lateral
+                          </button>
+                          <button 
+                            onClick={() => updateAnnex('type', 'l-shape')}
+                            className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase transition-all flex flex-col items-center gap-1 ${config.annex.type === 'l-shape' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-800 text-slate-500 hover:bg-slate-700'}`}
+                          >
+                            <Layout size={14} className="rotate-90" />
+                            En L
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Posición</label>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => updateAnnex('side', 'left')}
+                            className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${config.annex.side === 'left' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-800 text-slate-500 hover:bg-slate-700'}`}
+                          >
+                            Izquierda
+                          </button>
+                          <button 
+                            onClick={() => updateAnnex('side', 'right')}
+                            className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${config.annex.side === 'right' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-800 text-slate-500 hover:bg-slate-700'}`}
+                          >
+                            Derecha
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase italic">
+                            {config.annex.type === 'parallel' ? 'Ancho Ext.' : 'Largo Anexo'} (IN)
+                          </label>
+                          <GenericNumberInput 
+                            value={config.annex.width}
+                            onChange={(val) => updateAnnex('width', val)}
+                            step={0.125}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white text-sm font-bold focus:outline-none focus:border-blue-500"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase italic">
+                            {config.annex.type === 'parallel' ? 'Salida Ext.' : 'Ancho Anexo'} (IN)
+                          </label>
+                          <GenericNumberInput 
+                            value={config.annex.depth}
+                            onChange={(val) => updateAnnex('depth', val)}
+                            step={0.125}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white text-sm font-bold focus:outline-none focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase italic">Puertas Anexo</label>
+                        <div className="flex items-center gap-2">
+                           <button 
+                            onClick={() => updateAnnex('numDoors', Math.max(0, config.annex!.numDoors - 1))}
+                            className="w-8 h-8 rounded bg-slate-700 flex items-center justify-center text-white"
+                          >
+                            -
+                          </button>
+                          <span className="flex-1 text-center font-bold text-blue-400">{config.annex.numDoors}</span>
+                          <button 
+                            onClick={() => updateAnnex('numDoors', config.annex!.numDoors + 1)}
+                            className="w-8 h-8 rounded bg-slate-700 flex items-center justify-center text-white"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
               </div>
             </section>
           </div>

@@ -24,7 +24,7 @@ export function toFraction(decimal: number): string {
 }
 
 export function calculateCutList(config: CabinetConfig): CutPiece[] {
-  const { width, height, depth, thickness, numDoors } = config;
+  const { width, height, depth, thickness, numDoors, annex } = config;
   const t = thickness;
 
   const pieces: CutPiece[] = [
@@ -48,7 +48,127 @@ export function calculateCutList(config: CabinetConfig): CutPiece[] {
     }
   ];
 
-  // Intermediate stiles (Red part/Support)
+  // Annex Calculations (L-shape extension)
+  if (annex && annex.enabled) {
+    const aw = annex.depth; // In L: width of annex. In Parallel: depth of annex.
+    const al = annex.width; // In L: length of extension. In Parallel: width of extension.
+    const isL = annex.type === 'l-shape' || !annex.type;
+
+    if (isL) {
+      // The annex is a cabinet that extends forward from the side.
+      // It shares the side of the main cabinet, but needs its own outer side and front.
+      
+      // 2 new vertical posts at the very front of the return
+      pieces.push({
+        name: 'Anexo: Postes Verticales (Frente)',
+        length: height,
+        quantity: 2,
+        material: 'Aluminio 1 3/4"'
+      });
+
+      // If it's a separate module, it might need 2 more at the back extension
+      pieces.push({
+        name: 'Anexo: Postes Verticales (Atrás)',
+        length: height,
+        quantity: 2,
+        material: 'Aluminio 1 3/4"'
+      });
+
+      // Horizontal rails for the length (al)
+      // 4 rails connecting back to front
+      pieces.push({
+        name: 'Anexo: Travesaños de Largo',
+        length: al - t,
+        quantity: 4,
+        material: 'Aluminio 1 3/4"'
+      });
+
+      // Horizontal rails for the width (aw)
+      pieces.push({
+        name: 'Anexo: Travesaños de Ancho',
+        length: aw - (2 * t),
+        quantity: 4,
+        material: 'Aluminio 1 3/4"'
+      });
+    } else {
+      // PARALLEL (Side-by-side extension)
+      // Needs 4 vertical posts (2 outer, 2 inner at the union)
+      pieces.push({
+        name: 'Lateral: Postes Verticales',
+        length: height,
+        quantity: 4,
+        material: 'Aluminio 1 3/4"'
+      });
+
+      // Travesaños de Ancho (Horizontal front/back)
+      pieces.push({
+        name: 'Lateral: Travesaños de Ancho (Frente/Atrás)',
+        length: al - t,
+        quantity: 4,
+        material: 'Aluminio 1 3/4"'
+      });
+
+      // Travesaños de Salida/Fondo (Vertical depth)
+      pieces.push({
+        name: 'Lateral: Travesaños de Fondo (Laterales)',
+        length: aw - (2 * t),
+        quantity: 4,
+        material: 'Aluminio 1 3/4"'
+      });
+    }
+
+    // Intermediate stiles for Annex (if doors > 1)
+    if (annex.numDoors > 1) {
+      pieces.push({
+        name: `${isL ? 'Anexo' : 'Lateral'}: Postes Intermedios`,
+        length: height - (2 * t),
+        quantity: annex.numDoors - 1,
+        material: 'Aluminio 1 3/4"'
+      });
+    }
+
+    // Annex Doors
+    if (annex.numDoors > 0) {
+      const sideGap = 0.25;
+      const dt = 2; // Door profile
+      const doorHeight = height - (2 * t) + 0.75;
+      
+      let doorOpeningWidth = 0;
+      if (isL) {
+        const unionZ = depth - t/2;
+        doorOpeningWidth = Math.max(0, al - unionZ - t);
+      } else {
+        doorOpeningWidth = al - t;
+      }
+
+      if (doorOpeningWidth > 0) {
+        const doorWidth = (doorOpeningWidth - (2 * sideGap)) / annex.numDoors;
+
+        pieces.push({
+          name: `${isL ? 'Anexo' : 'Lateral'}: Marcos Puerta (Vert.)`,
+          length: doorHeight,
+          quantity: annex.numDoors * 2,
+          material: 'Aluminio 2"'
+        });
+
+        pieces.push({
+          name: `${isL ? 'Anexo' : 'Lateral'}: Marcos Puerta (Horiz.)`,
+          length: doorWidth - (2 * dt),
+          quantity: annex.numDoors * 2,
+          material: 'Aluminio 2"'
+        });
+
+        pieces.push({
+          name: `${isL ? 'Anexo' : 'Lateral'}: Vidrios / Paneles`,
+          length: doorHeight - (2 * dt),
+          quantity: annex.numDoors,
+          material: `${toFraction(doorWidth - (2 * dt))}" de ancho`
+        });
+      }
+    }
+  }
+
+  // Intermediate stiles (Red part/Support) - Main Cabinet
   if (numDoors > 1) {
     pieces.push({
       name: 'Postes Intermedios (Atrás)',

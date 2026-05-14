@@ -34,13 +34,19 @@ function Piece({ position, size, color, name, opacity = 1, onClick }: PieceProps
 
 function CabinetModel({ config }: { config: CabinetConfig }) {
   const [showTubeMeasures, setShowTubeMeasures] = useState(false);
-  const { width, height, depth, thickness, numDoors, showDoors, gap } = config;
+  const { width, height, depth, thickness, numDoors, showDoors, gap, annex } = config;
 
   const w = width;
   const h = height;
   const d = depth;
   const t = thickness;
   const g = gap;
+
+  // Annex variables
+  const annexEnabled = annex?.enabled;
+  const annexW = annex?.width || 0;
+  const annexSide = annex?.side || 'right';
+  const annexNumDoors = annex?.numDoors || 0;
 
   // Corner Vertical Posts
   const cornerPosts = [
@@ -188,17 +194,17 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
 
       {/* Dimension Labels */}
       <Html position={[0, -h/2 - 2, d/2]} center>
-        <div className="bg-blue-600 px-3 py-1 rounded text-[12px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
+        <div className="bg-blue-600 px-2 py-0.5 rounded text-[10px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
           ANCHO: {toFraction(width)}"
         </div>
       </Html>
       <Html position={[w/2 + 2, 0, d/2]} center>
-        <div className="bg-emerald-600 px-3 py-1 rounded text-[12px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
+        <div className="bg-emerald-600 px-2 py-0.5 rounded text-[10px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
           ALTO: {toFraction(height)}"
         </div>
       </Html>
       <Html position={[-w/2, -h/2, 0]} center>
-        <div className="bg-amber-600 px-3 py-1 rounded text-[12px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
+        <div className="bg-amber-600 px-2 py-0.5 rounded text-[10px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
           SALIDA: {toFraction(depth)}"
         </div>
       </Html>
@@ -294,10 +300,10 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
     
                 <Html position={[0, 0, 0.2]} center>
                   <div className="flex flex-col items-center gap-1">
-                    <div className="bg-blue-600/80 backdrop-blur-sm text-white font-bold text-[11px] px-2 py-0.5 rounded-full border border-blue-400">
+                    <div className="bg-blue-600/80 backdrop-blur-sm text-white font-bold text-[8px] px-1.5 py-0.5 rounded-full border border-blue-400">
                       {doorCount}
                     </div>
-                    <div className="bg-slate-900/90 text-blue-300 text-[9px] font-mono px-2 rounded border border-blue-500/20 whitespace-nowrap">
+                    <div className="bg-slate-900/90 text-blue-300 text-[6px] font-mono px-1 rounded border border-blue-500/20 whitespace-nowrap">
                       {toFraction(dWidth)}" x {toFraction(doorHeight)}"
                     </div>
                   </div>
@@ -308,16 +314,198 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
         }
         return doorGroups;
       })()}
+
+      {/* Annex Structure (L-Shape or Parallel) */}
+      {annexEnabled && (() => {
+        const al = annex?.width || 0; 
+        const ad = annex?.depth || 0; 
+        const sideMult = annexSide === 'right' ? 1 : -1;
+        const isL = annex?.type === 'l-shape';
+        
+        // Group position
+        // If L-shape: start at back edge, extend forward (Z)
+        // If Parallel: start at side edge, extend sideways (X)
+        const groupPos: [number, number, number] = isL 
+          ? [w/2 * sideMult, 0, -d/2 + t/2] 
+          : [(w/2 + al/2) * sideMult, 0, 0];
+
+        if (isL) {
+          return (
+            <group position={groupPos}>
+              {/* Annex Vertical Posts */}
+              {[
+                [ad * sideMult - t/2 * sideMult, 0, 0], // Back outer
+                [ad * sideMult - t/2 * sideMult, 0, al - t], // Front outer
+                [0, 0, al - t], // Front inner
+              ].map((pos, i) => (
+                <Piece 
+                  key={`ap-${i}`} 
+                  position={pos as [number, number, number]} 
+                  size={[t, h, t]} 
+                  color="#64748b" 
+                  name="AnnexPost" 
+                />
+              ))}
+
+              {/* Annex Horizontal Rails (Lengthwise) */}
+              {[
+                [0, h/2 - t/2, al/2 - t/2],
+                [0, -h/2 + t/2, al/2 - t/2],
+                [ad * sideMult - t/2 * sideMult, h/2 - t/2, al/2 - t/2],
+                [ad * sideMult - t/2 * sideMult, -h/2 + t/2, al/2 - t/2],
+              ].map((pos, i) => (
+                <Piece 
+                  key={`alr-${i}`} 
+                  position={pos as [number, number, number]} 
+                  size={[t, t, al - t]} 
+                  color="#cbd5e1" 
+                  name="AnnexLengthRail" 
+                />
+              ))}
+
+              {/* Annex Horizontal Rails (Widthwise) */}
+              {[
+                [ad/2 * sideMult, h/2 - t/2, al - t], // Front top
+                [ad/2 * sideMult, -h/2 + t/2, al - t], // Front bottom
+                [ad/2 * sideMult, h/2 - t/2, 0], // Back top (connecting to main cabinet)
+                [ad/2 * sideMult, -h/2 + t/2, 0], // Back bottom
+              ].map((pos, i) => (
+                <Piece 
+                  key={`awr-${i}`} 
+                  position={pos as [number, number, number]} 
+                  size={[ad - t, t, t]} 
+                  color="#cbd5e1" 
+                  name="AnnexWidthRail" 
+                />
+              ))}
+
+              {/* Annex Doors (Inner Side facing center) */}
+              {showDoors && annexNumDoors > 0 && (() => {
+                const doorGroups = [];
+                const sideGap = 0.25;
+                const adt = 2; // Door profile
+                const doorHeight = h - (2 * t) + 0.75;
+                
+                // The "union" area of the L-shape with the main cabinet side
+                // Main cabinet ends at world z = d/2. Group starts at world z = -d/2 + t/2.
+                // So union ends at local z = d - t/2.
+                const unionZ = d - t/2;
+                
+                // Available length for doors is from unionZ to front posts
+                const availableLength = al - unionZ - t;
+                
+                if (availableLength <= 0) return null;
+
+                const totalDoorLength = availableLength - (2 * sideGap);
+                const doorW = totalDoorLength / annexNumDoors;
+
+                for (let i = 0; i < annexNumDoors; i++) {
+                  const zPos = unionZ + sideGap + doorW/2 + i * doorW;
+                  doorGroups.push(
+                    <group key={`annex-door-${i}`} position={[t/10 * -sideMult, 0, zPos]} rotation={[0, sideMult * Math.PI/2, 0]}>
+                      <Piece position={[0, doorHeight/2 - adt/2, 0]} size={[doorW, adt, t/3]} color="#c084fc" opacity={0.8} name="ADoorTop" />
+                      <Piece position={[0, -doorHeight/2 + adt/2, 0]} size={[doorW, adt, t/3]} color="#c084fc" opacity={0.8} name="ADoorBottom" />
+                      <Piece position={[-doorW/2 + adt/2, 0, 0]} size={[adt, doorHeight, t/3]} color="#c084fc" opacity={0.8} name="ADoorLeft" />
+                      <Piece position={[doorW/2 - adt/2, 0, 0]} size={[adt, doorHeight, t/3]} color="#c084fc" opacity={0.8} name="ADoorRight" />
+                      <Piece position={[0, 0, 0]} size={[doorW - 2*adt, doorHeight - 2*adt, 0.1]} color="#e9d5ff" opacity={0.3} name="ADoorGlass" />
+                    </group>
+                  );
+                }
+                return doorGroups;
+              })()}
+
+              <Html position={[ad/2 * sideMult, -h/2 - 5, al/2]} center>
+                <div className="bg-purple-600 px-2 py-0.5 rounded text-[8px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
+                  ANEXO EN L: {toFraction(al)}"
+                </div>
+              </Html>
+            </group>
+          );
+        } else {
+          // PARALLEL (Side-by-side)
+          return (
+            <group position={groupPos}>
+              {/* Outer Posts */}
+              {[
+                [al/2 - t/2, 0, -ad/2 + t/2],
+                [al/2 - t/2, 0, ad/2 - t/2],
+              ].map((pos, i) => (
+                <Piece key={`ap-ext-${i}`} position={pos as [number, number, number]} size={[t, h, t]} color="#64748b" name="AnnexPostExt" />
+              ))}
+
+              {/* Inner Posts (at the union) */}
+              {[
+                [-al/2 + t/2, 0, -ad/2 + t/2],
+                [-al/2 + t/2, 0, ad/2 - t/2],
+              ].map((pos, i) => (
+                <Piece key={`ap-union-${i}`} position={pos as [number, number, number]} size={[t, h, t]} color="#64748b" name="AnnexPostUnion" />
+              ))}
+              
+              {/* Inner connecting rails are not needed if we share members, but let's draw them for clarity */}
+              {/* Width Rails (sideways) */}
+              {[
+                [0, h/2 - t/2, -ad/2 + t/2],
+                [0, -h/2 + t/2, -ad/2 + t/2],
+                [0, h/2 - t/2, ad/2 - t/2],
+                [0, -h/2 + t/2, ad/2 - t/2],
+              ].map((pos, i) => (
+                <Piece key={`awr-p-${i}`} position={pos as [number, number, number]} size={[al - t, t, t]} color="#cbd5e1" name="AnnexWidthRailP" />
+              ))}
+
+              {/* Depth Rails */}
+              {[
+                [al/2 - t/2, h/2 - t/2, 0],
+                [al/2 - t/2, -h/2 + t/2, 0],
+                [-al/2 + t/2, h/2 - t/2, 0],
+                [-al/2 + t/2, -h/2 + t/2, 0],
+              ].map((pos, i) => (
+                <Piece key={`adr-p-${i}`} position={pos as [number, number, number]} size={[t, t, ad - 2*t]} color="#cbd5e1" name="AnnexDepthRailP" />
+              ))}
+
+              {/* Doors (facing front, starting after the union post) */}
+              {showDoors && annexNumDoors > 0 && (() => {
+                const doorGroups = [];
+                const sideGap = 0.25;
+                const adt = 2;
+                const doorHeight = h - (2 * t) + 0.75;
+                // Subtract thickness of inner post (t) and gaps
+                const doorW = (al - t - (2 * sideGap)) / annexNumDoors;
+
+                for (let i = 0; i < annexNumDoors; i++) {
+                  // Start at -al/2 + t (the inner post thickness)
+                  const xPos = -al/2 + t + sideGap + doorW/2 + i * doorW;
+                  doorGroups.push(
+                    <group key={`annex-door-p-${i}`} position={[xPos, 0, ad/2 + t/5]}>
+                      <Piece position={[0, doorHeight/2 - adt/2, 0]} size={[doorW, adt, t/3]} color="#10b981" opacity={0.8} name="ADoorTopP" />
+                      <Piece position={[0, -doorHeight/2 + adt/2, 0]} size={[doorW, adt, t/3]} color="#10b981" opacity={0.8} name="ADoorBottomP" />
+                      <Piece position={[-doorW/2 + adt/2, 0, 0]} size={[adt, doorHeight, t/3]} color="#10b981" opacity={0.8} name="ADoorLeftP" />
+                      <Piece position={[doorW/2 - adt/2, 0, 0]} size={[adt, doorHeight, t/3]} color="#10b981" opacity={0.8} name="ADoorRightP" />
+                      <Piece position={[0, 0, 0]} size={[doorW - 2*adt, doorHeight - 2*adt, 0.1]} color="#d1fae5" opacity={0.3} name="ADoorGlassP" />
+                    </group>
+                  );
+                }
+                return doorGroups;
+              })()}
+
+              <Html position={[0, -h/2 - 5, ad/2]} center>
+                <div className="bg-emerald-600 px-2 py-0.5 rounded text-[8px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
+                  LATERAL: {toFraction(al)}"
+                </div>
+              </Html>
+            </group>
+          );
+        }
+      })()}
     </group>
   );
 }
 
 export default function Cabinet3D({ config }: { config: CabinetConfig }) {
   const maxDim = Math.max(config.width, config.height, config.depth);
-  const cameraDist = maxDim * 2.0;
+  const cameraDist = maxDim * 2.5;
 
   return (
-    <div className="w-full h-[550px] bg-slate-950 rounded-xl overflow-hidden border border-slate-800 shadow-2xl relative">
+    <div className="w-full h-[500px] bg-slate-950 rounded-xl overflow-hidden border border-slate-800 shadow-2xl relative">
       <div className="absolute top-4 left-4 z-10 flex gap-2">
         <div className="bg-slate-800/80 backdrop-blur-sm p-2 rounded border border-slate-700 text-[10px] text-blue-400 font-mono text-center">
           ESTRUCTURA ESCALADA (INCH)<br/>
