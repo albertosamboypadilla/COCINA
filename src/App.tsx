@@ -502,11 +502,20 @@ export default function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Left Panel: Inputs */}
-          <div className="lg:col-span-4 space-y-6">
-            <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+          {/* 1. MEDIDAS - Mobile Order 1 / Desktop: Top Right */}
+          <div className="lg:col-span-8 order-1 lg:order-2 space-y-6">
+            <div className="flex gap-2 sm:gap-4">
+              <MainDimension label="ANCHO" value={config.width} keyName="width" onUpdate={updateConfig} />
+              <MainDimension label="ALTO" value={config.height} keyName="height" onUpdate={updateConfig} />
+              <MainDimension label="SALIDA" value={config.depth} keyName="depth" onUpdate={updateConfig} />
+            </div>
+          </div>
+
+          {/* 2. NÚMERO DE PUERTAS - Mobile Order 2 / Desktop: Top Left */}
+          <div className="lg:col-span-4 order-2 lg:order-1">
+            <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-full">
               <div className="flex items-center gap-2 mb-6 text-slate-400 font-mono text-xs uppercase tracking-widest">
                 <Layout size={14} />
                 Configuración
@@ -553,8 +562,11 @@ export default function App() {
                 </div>
               </div>
             </section>
+          </div>
 
-            <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl overflow-hidden relative group">
+          {/* 3. DESGLOSE - Mobile Order 3 / Desktop: Bottom Left */}
+          <div className="lg:col-span-4 order-3 lg:order-3">
+            <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl overflow-hidden relative group h-full">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Box size={80} />
               </div>
@@ -588,25 +600,19 @@ export default function App() {
                 
                 <div className="pt-4 flex justify-between items-center text-[10px] text-slate-500 font-mono italic">
                   <span>* Medidas finales aproximadas</span>
-                  <button className="text-blue-500 hover:text-blue-400 font-bold uppercase tracking-widest">
-                    Generar PDF
+                  <button className="text-blue-500 hover:text-blue-400 font-bold uppercase tracking-widest text-[9px]">
+                    PDF
                   </button>
                 </div>
               </div>
             </section>
           </div>
 
-          {/* Right Panel: Viewport */}
-          <div className="lg:col-span-8 space-y-6">
-            {/* Quick Dimensions Bar */}
-            <div className="flex gap-4">
-              <MainDimension label="ANCHO" value={config.width} keyName="width" onUpdate={updateConfig} />
-              <MainDimension label="ALTO" value={config.height} keyName="height" onUpdate={updateConfig} />
-              <MainDimension label="SALIDA" value={config.depth} keyName="depth" onUpdate={updateConfig} />
-            </div>
-
+          {/* 4. ESTRUCTURA 3D - Mobile Order 4 / Desktop: Bottom Right */}
+          <div className="lg:col-span-8 order-4 lg:order-4 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
             <Cabinet3D config={config} />
           </div>
+
         </div>
       </main>
 

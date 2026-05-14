@@ -188,17 +188,17 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
 
       {/* Dimension Labels */}
       <Html position={[0, -h/2 - 2, d/2]} center>
-        <div className="bg-blue-600 px-2 py-0.5 rounded text-[10px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
+        <div className="bg-blue-600 px-3 py-1 rounded text-[12px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
           ANCHO: {toFraction(width)}"
         </div>
       </Html>
       <Html position={[w/2 + 2, 0, d/2]} center>
-        <div className="bg-emerald-600 px-2 py-0.5 rounded text-[10px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
+        <div className="bg-emerald-600 px-3 py-1 rounded text-[12px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
           ALTO: {toFraction(height)}"
         </div>
       </Html>
       <Html position={[-w/2, -h/2, 0]} center>
-        <div className="bg-amber-600 px-2 py-0.5 rounded text-[10px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
+        <div className="bg-amber-600 px-3 py-1 rounded text-[12px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
           SALIDA: {toFraction(depth)}"
         </div>
       </Html>
@@ -294,10 +294,10 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
     
                 <Html position={[0, 0, 0.2]} center>
                   <div className="flex flex-col items-center gap-1">
-                    <div className="bg-blue-600/80 backdrop-blur-sm text-white font-bold text-[8px] px-1.5 py-0.5 rounded-full border border-blue-400">
+                    <div className="bg-blue-600/80 backdrop-blur-sm text-white font-bold text-[11px] px-2 py-0.5 rounded-full border border-blue-400">
                       {doorCount}
                     </div>
-                    <div className="bg-slate-900/90 text-blue-300 text-[6px] font-mono px-1 rounded border border-blue-500/20 whitespace-nowrap">
+                    <div className="bg-slate-900/90 text-blue-300 text-[9px] font-mono px-2 rounded border border-blue-500/20 whitespace-nowrap">
                       {toFraction(dWidth)}" x {toFraction(doorHeight)}"
                     </div>
                   </div>
@@ -314,10 +314,10 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
 
 export default function Cabinet3D({ config }: { config: CabinetConfig }) {
   const maxDim = Math.max(config.width, config.height, config.depth);
-  const cameraDist = maxDim * 2.5;
+  const cameraDist = maxDim * 2.0;
 
   return (
-    <div className="w-full h-[500px] bg-slate-950 rounded-xl overflow-hidden border border-slate-800 shadow-2xl relative">
+    <div className="w-full h-[550px] bg-slate-950 rounded-xl overflow-hidden border border-slate-800 shadow-2xl relative">
       <div className="absolute top-4 left-4 z-10 flex gap-2">
         <div className="bg-slate-800/80 backdrop-blur-sm p-2 rounded border border-slate-700 text-[10px] text-blue-400 font-mono text-center">
           ESTRUCTURA ESCALADA (INCH)<br/>
