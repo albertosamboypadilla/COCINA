@@ -204,21 +204,38 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
 
       {/* Doors */}
       {showDoors && numDoors > 0 && Array.from({ length: numDoors }).map((_, i) => {
-        const doorWidth = doorOpeningWidth - 2 * g;
-        const doorHeight = h - 2 * t - 2 * g;
+        // Match breakdown logic: (W - 2T - 0.25*numDoors) / numDoors
+        const doorWidth = (width - (2 * t) - (0.25 * numDoors)) / numDoors;
+        // Match breakdown logic: H - T - 1
+        const doorHeight = h - t - 1;
         
-        // Center of each opening in the new uniform distribution
+        // Center of each opening in the uniform distribution
         const x = -w/2 + t + i * doorOpeningWidth + i * t + doorOpeningWidth/2;
         
+        // The door opening center is 0 (since group is at h/2).
+        // If doorHeight is H-T-1, and it's positioned centered on the opening.
+        // Opening is between -h/2 + t and h/2 - t. Center is 0.
+        // Let's keep it centered on y=0 relative to the cabinet height group.
+        
         return (
-          <group key={i} position={[x, 0, d/2 + t/2]}>
-            <Piece position={[0, doorHeight/2 - t/4, 0]} size={[doorWidth, t/2, t/2]} color="#3b82f6" opacity={0.8} name="DoorTop" />
-            <Piece position={[0, -doorHeight/2 + t/4, 0]} size={[doorWidth, t/2, t/2]} color="#3b82f6" opacity={0.8} name="DoorBottom" />
-            <Piece position={[-doorWidth/2 + t/4, 0, 0]} size={[t/2, doorHeight, t/2]} color="#3b82f6" opacity={0.8} name="DoorLeft" />
-            <Piece position={[doorWidth/2 - t/4, 0, 0]} size={[t/2, doorHeight, t/2]} color="#3b82f6" opacity={0.8} name="DoorRight" />
-            <Html position={[0, 0, 0.1]} center>
-              <div className="bg-blue-500/20 text-blue-400 font-bold text-xs px-1 rounded-full w-4 h-4 flex items-center justify-center border border-blue-500/30">
-                {i + 1}
+          <group key={i} position={[x, 0, d/2 + t/5]}>
+            {/* Door Frame (Simple blue outline to represent the door unit) */}
+            <Piece position={[0, doorHeight/2 - t/4, 0]} size={[doorWidth, t/2, t/2]} color="#60a5fa" opacity={0.9} name="DoorTop" />
+            <Piece position={[0, -doorHeight/2 + t/4, 0]} size={[doorWidth, t/2, t/2]} color="#60a5fa" opacity={0.9} name="DoorBottom" />
+            <Piece position={[-doorWidth/2 + t/4, 0, 0]} size={[t/2, doorHeight, t/2]} color="#60a5fa" opacity={0.9} name="DoorLeft" />
+            <Piece position={[doorWidth/2 - t/4, 0, 0]} size={[t/2, doorHeight, t/2]} color="#60a5fa" opacity={0.9} name="DoorRight" />
+            
+            {/* Glass panel */}
+            <Piece position={[0, 0, 0]} size={[doorWidth - t, doorHeight - t, 0.1]} color="#93c5fd" opacity={0.3} name="DoorGlass" />
+
+            <Html position={[0, 0, 0.2]} center>
+              <div className="flex flex-col items-center gap-1">
+                <div className="bg-blue-600/80 backdrop-blur-sm text-white font-bold text-[8px] px-1.5 py-0.5 rounded-full border border-blue-400">
+                  {i + 1}
+                </div>
+                <div className="bg-slate-900/90 text-blue-300 text-[6px] font-mono px-1 rounded border border-blue-500/20 whitespace-nowrap">
+                  {doorWidth.toFixed(3)}" x {doorHeight.toFixed(3)}"
+                </div>
               </div>
             </Html>
           </group>

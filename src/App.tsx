@@ -67,20 +67,24 @@ const GenericNumberInput = ({ value, onChange, className, step, min }: { value: 
   );
 };
 
+import { calculateCutList } from './lib/cabinetLogic';
+
 export default function App() {
   const [config, setConfig] = useState<CabinetConfig>({
-    width: 24,
-    height: 30,
+    width: 36.5,
+    height: 35,
     depth: 24,
     thickness: 1.75,
     gap: 0.125,
     numDoors: 2,
-    showDoors: false
+    showDoors: true
   });
 
   const updateConfig = (key: keyof CabinetConfig, value: any) => {
     setConfig(prev => ({ ...prev, [key]: value }));
   };
+
+  const cutList = useMemo(() => calculateCutList(config), [config]);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-slate-200 font-sans selection:bg-blue-500/30">
@@ -166,6 +170,47 @@ export default function App() {
                   >
                     {config.showDoors ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
                     {config.showDoors ? 'OCULTAR PUERTAS' : 'COLOCAR PUERTAS'}
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl overflow-hidden relative group">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <Box size={80} />
+              </div>
+              
+              <div className="flex items-center gap-2 mb-6 text-[#b91c1c] font-mono text-xs uppercase tracking-widest font-bold">
+                <Layout size={14} />
+                Deglose Automático
+              </div>
+              
+              <div className="space-y-4 relative z-10">
+                <div className="grid grid-cols-12 gap-2 pb-2 border-b border-slate-800 text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
+                  <div className="col-span-1">Q</div>
+                  <div className="col-span-7">PIEZA / MATERIAL</div>
+                  <div className="col-span-4 text-right">LONGITUD</div>
+                </div>
+                
+                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                  {cutList.map((piece, i) => (
+                    <div key={i} className="grid grid-cols-12 gap-2 py-2 items-center border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 rounded px-1 transition-colors">
+                      <div className="col-span-1 text-xs font-mono font-bold text-blue-500">{piece.quantity}x</div>
+                      <div className="col-span-7">
+                        <div className="text-xs font-bold text-slate-300">{piece.name}</div>
+                        {piece.material && <div className="text-[9px] text-slate-500 font-mono leading-none">{piece.material}</div>}
+                      </div>
+                      <div className="col-span-4 text-right text-xs font-mono font-bold text-emerald-400">
+                        {piece.length.toFixed(3)}"
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="pt-4 flex justify-between items-center text-[10px] text-slate-500 font-mono italic">
+                  <span>* Medidas finales aproximadas</span>
+                  <button className="text-blue-500 hover:text-blue-400 font-bold uppercase tracking-widest">
+                    Generar PDF
                   </button>
                 </div>
               </div>
