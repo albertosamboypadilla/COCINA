@@ -9,6 +9,64 @@ import {
 import Cabinet3D from './components/Cabinet3D';
 import { CabinetConfig } from './types';
 
+interface MainDimensionProps {
+  label: string;
+  value: number | string;
+  keyName: keyof CabinetConfig;
+  step?: number;
+  onUpdate: (key: keyof CabinetConfig, value: number) => void;
+}
+
+const MainDimension = ({ label, value, keyName, step = 0.125, onUpdate }: MainDimensionProps) => {
+  const [localValue, setLocalValue] = useState<string>(value.toString());
+
+  // Sync local state when external value changes (e.g. from buttons)
+  React.useEffect(() => {
+    setLocalValue(value.toString());
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setLocalValue(val);
+    if (val !== '') {
+      onUpdate(keyName, Number(val));
+    }
+  };
+
+  return (
+    <div className="flex-1 flex flex-col gap-2 p-4 bg-slate-800/40 border border-slate-700/50 rounded-xl">
+      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">{label} (IN)</label>
+      <input 
+        type="number" 
+        value={localValue}
+        step={step}
+        min={0}
+        onChange={handleChange}
+        className="bg-transparent text-xl font-bold text-blue-400 focus:outline-none focus:text-white transition-colors w-full"
+      />
+    </div>
+  );
+};
+
+const GenericNumberInput = ({ value, onChange, className, step, min }: { value: number, onChange: (val: number) => void, className?: string, step?: number, min?: number }) => {
+  const [localValue, setLocalValue] = useState<string>(value.toString());
+  React.useEffect(() => { setLocalValue(value.toString()); }, [value]);
+  
+  return (
+    <input 
+      type="number"
+      step={step}
+      min={min}
+      value={localValue}
+      onChange={(e) => {
+        setLocalValue(e.target.value);
+        if (e.target.value !== '') onChange(Number(e.target.value));
+      }}
+      className={className}
+    />
+  );
+};
+
 export default function App() {
   const [config, setConfig] = useState<CabinetConfig>({
     width: 24,
@@ -23,20 +81,6 @@ export default function App() {
   const updateConfig = (key: keyof CabinetConfig, value: any) => {
     setConfig(prev => ({ ...prev, [key]: value }));
   };
-
-  const MainDimension = ({ label, value, keyName, step = 0.125 }: { label: string, value: number, keyName: keyof CabinetConfig, step?: number }) => (
-    <div className="flex-1 flex flex-col gap-2 p-4 bg-slate-800/40 border border-slate-700/50 rounded-xl">
-      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">{label} (IN)</label>
-      <input 
-        type="number" 
-        value={value}
-        step={step}
-        min={0}
-        onChange={(e) => updateConfig(keyName, Number(e.target.value))}
-        className="bg-transparent text-xl font-bold text-blue-400 focus:outline-none focus:text-white transition-colors w-full"
-      />
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-slate-200 font-sans selection:bg-blue-500/30">
@@ -76,12 +120,11 @@ export default function App() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <label className="text-xs font-semibold text-slate-500 uppercase">GROSOR PERFIL</label>
-                    <input 
-                      type="number"
+                    <GenericNumberInput 
                       step={0.125}
                       min={0.125}
                       value={config.thickness}
-                      onChange={(e) => updateConfig('thickness', Number(e.target.value))}
+                      onChange={(val) => updateConfig('thickness', val)}
                       className="bg-transparent text-right text-blue-400 font-mono text-xs focus:outline-none w-20"
                     />
                   </div>
@@ -111,11 +154,10 @@ export default function App() {
                     >
                       -
                     </button>
-                    <input 
-                      type="number"
+                    <GenericNumberInput 
                       min={0}
                       value={config.numDoors}
-                      onChange={(e) => updateConfig('numDoors', Number(e.target.value))}
+                      onChange={(val) => updateConfig('numDoors', val)}
                       className="bg-transparent text-center text-xl font-bold text-blue-400 focus:outline-none w-full"
                     />
                     <button 
@@ -149,9 +191,9 @@ export default function App() {
           <div className="lg:col-span-8 space-y-6">
             {/* Quick Dimensions Bar */}
             <div className="flex gap-4">
-              <MainDimension label="ANCHO" value={config.width} keyName="width" />
-              <MainDimension label="ALTO" value={config.height} keyName="height" />
-              <MainDimension label="SALIDA" value={config.depth} keyName="depth" />
+              <MainDimension label="ANCHO" value={config.width} keyName="width" onUpdate={updateConfig} />
+              <MainDimension label="ALTO" value={config.height} keyName="height" onUpdate={updateConfig} />
+              <MainDimension label="SALIDA" value={config.depth} keyName="depth" onUpdate={updateConfig} />
             </div>
 
             <Cabinet3D config={config} />
