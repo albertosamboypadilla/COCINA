@@ -72,7 +72,7 @@ export default function App() {
     width: 24,
     height: 30,
     depth: 24,
-    thickness: 0.75,
+    thickness: 1.75,
     gap: 0.125,
     numDoors: 2,
     showDoors: false
@@ -110,34 +110,6 @@ export default function App() {
           
           {/* Left Panel: Inputs */}
           <div className="lg:col-span-4 space-y-6">
-            <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-              <div className="flex items-center gap-2 mb-6 text-slate-400 font-mono text-xs uppercase tracking-widest text-blue-500">
-                <Settings size={14} />
-                Estructura
-              </div>
-              
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-semibold text-slate-500 uppercase">GROSOR PERFIL</label>
-                    <GenericNumberInput 
-                      step={0.125}
-                      min={0.125}
-                      value={config.thickness}
-                      onChange={(val) => updateConfig('thickness', val)}
-                      className="bg-transparent text-right text-blue-400 font-mono text-xs focus:outline-none w-20"
-                    />
-                  </div>
-                  <input 
-                    type="range" min="0.125" max="20" step="0.125"
-                    value={config.thickness}
-                    onChange={(e) => updateConfig('thickness', Number(e.target.value))}
-                    className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                  />
-                </div>
-              </div>
-            </section>
-
             <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
               <div className="flex items-center gap-2 mb-6 text-slate-400 font-mono text-xs uppercase tracking-widest">
                 <Layout size={14} />
