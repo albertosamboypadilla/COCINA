@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Environment, Grid, Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -10,11 +10,12 @@ interface PieceProps {
   color: string;
   name: string;
   opacity?: number;
+  onClick?: () => void;
 }
 
-function Piece({ position, size, color, name, opacity = 1 }: PieceProps) {
+function Piece({ position, size, color, name, opacity = 1, onClick }: PieceProps) {
   return (
-    <mesh position={position}>
+    <mesh position={position} onClick={onClick}>
       <boxGeometry args={size} />
       <meshStandardMaterial 
         color={color} 
@@ -31,6 +32,7 @@ function Piece({ position, size, color, name, opacity = 1 }: PieceProps) {
 }
 
 function CabinetModel({ config }: { config: CabinetConfig }) {
+  const [showTubeMeasures, setShowTubeMeasures] = useState(false);
   const { width, height, depth, thickness, numDoors, showDoors, gap } = config;
 
   const w = width;
@@ -47,32 +49,28 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
     [w/2 - t/2, 0, d/2 - t/2],
   ];
 
-  // Intermediate Vertical Posts (Stiles)
+  // Intermediate Vertical Posts (Stiles) - Equal spacing for all sections
+  const numBackSections = numDoors > 0 ? numDoors : 1;
   const totalInternalWidth = w - (2 * t);
-  const numFrontStiles = numDoors > 1 ? Math.floor((numDoors - 1) / 2) : 0;
-  const doorOpeningWidth = numDoors > 0 ? (totalInternalWidth - (numFrontStiles * t)) / numDoors : 0;
+  const totalStileWidth = (numBackSections - 1) * t;
+  const doorOpeningWidth = (totalInternalWidth - totalStileWidth) / numBackSections;
   
-  const intermediatePosts = [];
+  const intermediatePosts: { pos: [number, number, number]; isBack: boolean }[] = [];
   
-  // Front Stiles (one per every 2 doors)
-  if (numDoors >= 2) {
-    for (let i = 1; i <= numFrontStiles; i++) {
-      const x = -w/2 + t + (2 * i * doorOpeningWidth) + (i - 0.5) * t;
-      intermediatePosts.push([x, 0, d/2 - t/2]); // Front
+  // Create intermediate stiles
+  if (numBackSections > 1) {
+    for (let i = 1; i < numBackSections; i++) {
+      const x = -w/2 + t + i * doorOpeningWidth + (i - 0.5) * t;
+      // Back: Tube for every door divider
+      intermediatePosts.push({ pos: [x, 0, -d/2 + t/2], isBack: true });
+      // Front: Tube for every 2 doors
+      if (i % 2 === 0) {
+        intermediatePosts.push({ pos: [x, 0, d/2 - t/2], isBack: false });
+      }
     }
   }
 
-  // Back Stiles (2 per every 2 doors)
-  const numBackStilesActual = Math.floor(numDoors / 2) * 2;
-  if (numBackStilesActual > 0) {
-    for (let i = 1; i <= numBackStilesActual; i++) {
-        // Distribute evenly between the corner posts
-        const x = -w/2 + t + i * (totalInternalWidth / (numBackStilesActual + 1));
-        intermediatePosts.push([x, 0, -d/2 + t/2]); // Back
-    }
-  }
-
-  // Width Rails
+  // Width Rails (Horizontal)
   const widthRails = [
     [0, h/2 - t/2, -d/2 + t/2],
     [0, -h/2 + t/2, -d/2 + t/2],
@@ -80,7 +78,7 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
     [0, -h/2 + t/2, d/2 - t/2],
   ];
 
-  // Depth Rails
+  // Depth Rails (Sides)
   const depthRails = [
     [-w/2 + t/2, h/2 - t/2, 0],
     [-w/2 + t/2, -h/2 + t/2, 0],
@@ -89,45 +87,49 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
   ];
 
   return (
-    <group position={[0, h/2, 0]}>
+    <group position={[0, h/2, 0]} onPointerMissed={() => setShowTubeMeasures(false)}>
       {/* Corner Posts */}
       {cornerPosts.map((pos, i) => {
-        const isBack = pos[2] < 0;
+        const isB = pos[2] < 0;
         return (
           <Piece 
             key={`cp-${i}`} 
             position={pos as [number, number, number]} 
             size={[t, h, t]} 
-            color={isBack ? "#7f1d1d" : "#94a3b8"} 
+            color={isB ? "#7f1d1d" : "#94a3b8"} 
             name="CornerPost"
+            onClick={isB ? () => setShowTubeMeasures(!showTubeMeasures) : undefined}
           />
         );
       })}
 
       {/* Intermediate Posts */}
-      {intermediatePosts.map((pos, i) => {
-        const isBack = pos[2] < 0;
+      {intermediatePosts.map((item, i) => {
         return (
           <Piece 
             key={`ip-${i}`} 
-            position={pos as [number, number, number]} 
+            position={item.pos} 
             size={[t, h - 2*t, t]} 
-            color={isBack ? "#991b1b" : "#64748b"} 
+            color={item.isBack ? "#991b1b" : "#64748b"} 
             name="IntermediatePost"
+            onClick={item.isBack ? () => setShowTubeMeasures(!showTubeMeasures) : undefined}
           />
         );
       })}
 
       {/* Width Rails */}
       {widthRails.map((pos, i) => {
-        const isBack = pos[2] < 0;
+        const isB = pos[2] < 0;
+        const isBottomFront = !isB && pos[1] < 0;
+        const isRedPart = isB;
         return (
           <Piece 
             key={`wr-${i}`} 
             position={pos as [number, number, number]} 
             size={[w - (2*t), t, t]} 
-            color={isBack ? "#7f1d1d" : "#cbd5e1"} 
+            color={isBottomFront ? (showTubeMeasures ? "#3b82f6" : "#cbd5e1") : (isB ? "#7f1d1d" : "#cbd5e1")} 
             name="WidthRail"
+            onClick={(isBottomFront || isRedPart) ? () => setShowTubeMeasures(!showTubeMeasures) : undefined}
           />
         );
       })}
@@ -143,18 +145,58 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
         />
       ))}
 
+      {/* Tube-to-Tube Measurements (Front and Back) */}
+      {showTubeMeasures && [d/2, -d/2].map((zPos, zIdx) => {
+        const isB = zPos < 0;
+        const postsX = [
+          -w/2 + t/2,
+          ...intermediatePosts.filter(p => isB ? p.isBack : !p.isBack).map(p => p.pos[0]),
+          w/2 - t/2
+        ].sort((a, b) => b - a);
+
+        return postsX.map((x, i) => {
+          if (i === postsX.length - 1) return null;
+          const nextX = postsX[i + 1];
+          const midX = (x + nextX) / 2;
+          const dist = Math.abs(x - nextX) - t; 
+          
+          if (dist <= 0) return null;
+
+          return (
+            <Html 
+              key={`dist-${zIdx}-${i}`} 
+              position={[midX, -h/2 + t * 1.5, zPos + (isB ? -t : t)]} 
+              center 
+              style={{ pointerEvents: 'none' }}
+            >
+              <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
+                <div className={`${isB ? 'bg-red-600 border-red-400' : 'bg-blue-600 border-blue-400'} border px-1.5 py-0.5 rounded shadow-[0_0_15px_rgba(59,130,246,0.5)] flex items-center gap-1`}>
+                  <span className="text-[10px] font-mono font-black text-white whitespace-nowrap">
+                    {dist.toFixed(3)}"
+                  </span>
+                </div>
+                <div className={`w-[200%] h-[1px] ${isB ? 'bg-red-500/50' : 'bg-blue-500/50'} absolute -top-2 left-1/2 -translate-x-1/2 flex justify-between px-0.5`}>
+                  <div className={`w-[1px] h-2 ${isB ? 'bg-red-400' : 'bg-blue-400'}`} />
+                  <div className={`w-[1px] h-2 ${isB ? 'bg-red-400' : 'bg-blue-400'}`} />
+                </div>
+              </div>
+            </Html>
+          );
+        });
+      })}
+
       {/* Dimension Labels */}
-      <Html position={[0, -h/2 - 2, d/2]} center shadow>
+      <Html position={[0, -h/2 - 2, d/2]} center>
         <div className="bg-blue-600 px-2 py-0.5 rounded text-[10px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
           ANCHO: {width}"
         </div>
       </Html>
-      <Html position={[w/2 + 2, 0, d/2]} center shadow>
+      <Html position={[w/2 + 2, 0, d/2]} center>
         <div className="bg-emerald-600 px-2 py-0.5 rounded text-[10px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
           ALTO: {height}"
         </div>
       </Html>
-      <Html position={[-w/2, -h/2, 0]} center shadow>
+      <Html position={[-w/2, -h/2, 0]} center>
         <div className="bg-amber-600 px-2 py-0.5 rounded text-[10px] font-mono font-bold text-white whitespace-nowrap shadow-xl">
           SALIDA: {depth}"
         </div>
@@ -165,9 +207,8 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
         const doorWidth = doorOpeningWidth - 2 * g;
         const doorHeight = h - 2 * t - 2 * g;
         
-        // Center of each opening, accounting for stiles every 2 doors
-        const numStilesBefore = Math.floor(i / 2);
-        const x = -w/2 + t + i * doorOpeningWidth + numStilesBefore * t + doorOpeningWidth/2;
+        // Center of each opening in the new uniform distribution
+        const x = -w/2 + t + i * doorOpeningWidth + i * t + doorOpeningWidth/2;
         
         return (
           <group key={i} position={[x, 0, d/2 + t/2]}>
