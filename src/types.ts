@@ -17,3 +17,10 @@ export interface CabinetConfig extends CabinetDimensions {
   numDoors: number;
   showDoors: boolean;
 }
+
+export interface Project {
+  id: string;
+  clientName: string;
+  date: string;
+  config: CabinetConfig;
+}
