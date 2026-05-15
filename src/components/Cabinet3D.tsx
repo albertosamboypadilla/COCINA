@@ -1,6 +1,7 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Environment, Grid, Html } from '@react-three/drei';
+import { Maximize2, Minimize2 } from 'lucide-react';
 import * as THREE from 'three';
 import { CabinetConfig } from '../types';
 import { toFraction } from '../lib/cabinetLogic';
@@ -445,9 +446,13 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
 
                         {/* Reflection Lines */}
                         <group position={[0, 0, 0.06]}>
-                          <mesh rotation={[0, 0, Math.PI / 4]}>
+                          <mesh rotation={[0, 0, -Math.PI / 4]}>
                             <planeGeometry args={[dw * 0.6, 0.05]} />
                             <meshBasicMaterial color="white" opacity={0.2} transparent />
+                          </mesh>
+                          <mesh position={[dw * 0.1, -dw * 0.1, 0]} rotation={[0, 0, -Math.PI / 4]}>
+                            <planeGeometry args={[dw * 0.4, 0.03]} />
+                            <meshBasicMaterial color="white" opacity={0.15} transparent />
                           </mesh>
                         </group>
                         
@@ -592,9 +597,13 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
                         
                         {/* Reflection Lines */}
                         <group position={[0, 0, 0.06]}>
-                          <mesh rotation={[0, 0, Math.PI / 4]}>
+                          <mesh rotation={[0, 0, -Math.PI / 4]}>
                             <planeGeometry args={[dw * 0.6, 0.05]} />
                             <meshBasicMaterial color="white" opacity={0.2} transparent />
+                          </mesh>
+                          <mesh position={[dw * 0.1, -dw * 0.1, 0]} rotation={[0, 0, -Math.PI / 4]}>
+                            <planeGeometry args={[dw * 0.4, 0.03]} />
+                            <meshBasicMaterial color="white" opacity={0.15} transparent />
                           </mesh>
                         </group>
 
@@ -646,17 +655,75 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
 }
 
 export default function Cabinet3D({ config }: { config: CabinetConfig }) {
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const maxDim = Math.max(config.width, config.height, config.depth);
   const cameraDist = maxDim * 2.5;
 
+  // Handle escape key to exit fullscreen
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isFullscreen]);
+
+  // Native Fullscreen API integration
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  const toggleFullscreen = () => {
+    if (!isFullscreen) {
+      if (containerRef.current?.requestFullscreen) {
+        containerRef.current.requestFullscreen();
+      }
+      setIsFullscreen(true);
+    } else {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      }
+      setIsFullscreen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
   return (
-    <div className="w-full h-[500px] bg-slate-950 rounded-xl overflow-hidden border border-slate-800 shadow-2xl relative">
-      <div className="absolute top-4 left-4 z-10 flex gap-2">
-        <div className="bg-slate-800/80 backdrop-blur-sm p-2 rounded border border-slate-700 text-[10px] text-blue-400 font-mono text-center">
-          ESTRUCTURA ESCALADA (INCH)<br/>
+    <div 
+      ref={containerRef}
+      className={`bg-slate-950 overflow-hidden border border-slate-800 shadow-2xl relative transition-all duration-500 ease-in-out ${
+        isFullscreen 
+          ? 'fixed inset-0 z-[100] rounded-0' 
+          : 'w-full h-[600px] rounded-xl relative z-10'
+      }`}
+    >
+      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+        <div className="bg-slate-800/80 backdrop-blur-sm p-3 rounded-lg border border-slate-700 text-[10px] text-blue-400 font-mono shadow-xl transition-opacity duration-300">
+          <span className="font-black text-white text-xs mb-1 block uppercase tracking-wider">Estructura Escalada</span>
           {toFraction(config.width)}" x {toFraction(config.height)}" x {toFraction(config.depth)}"
         </div>
       </div>
+
+      <div className="absolute top-4 right-4 z-[110] flex gap-3">
+        <button 
+          onClick={toggleFullscreen}
+          className="bg-blue-600 hover:bg-blue-500 text-white p-4 rounded-2xl shadow-xl shadow-blue-900/60 transition-all active:scale-95 group flex items-center gap-3 border border-blue-400/40"
+          title={isFullscreen ? "Cerrar Pantalla Grande" : "Abrir Pantalla Grande"}
+        >
+          {isFullscreen ? <Minimize2 size={28} /> : <Maximize2 size={28} />}
+          <span className="text-sm font-black tracking-widest uppercase">
+            {isFullscreen ? "Cerrar" : "Pantalla Grande"}
+          </span>
+        </button>
+      </div>
+
       <Canvas shadows camera={{ position: [cameraDist * 0.7, cameraDist * 0.7, cameraDist], fov: 45 }}>
         <OrbitControls makeDefault minDistance={1} maxDistance={maxDim * 10} />
         
