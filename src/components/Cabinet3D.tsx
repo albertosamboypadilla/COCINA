@@ -674,14 +674,31 @@ export default function Cabinet3D({ config }: { config: CabinetConfig }) {
   const containerRef = useRef<HTMLDivElement>(null);
   
   const toggleFullscreen = () => {
+    const doc = document as any;
+    const container = containerRef.current as any;
+
     if (!isFullscreen) {
-      if (containerRef.current?.requestFullscreen) {
-        containerRef.current.requestFullscreen();
+      if (container) {
+        if (container.requestFullscreen) {
+          container.requestFullscreen().catch((err: any) => console.log(err));
+        } else if (container.webkitRequestFullscreen) {
+          container.webkitRequestFullscreen();
+        } else if (container.mozRequestFullScreen) {
+          container.mozRequestFullScreen();
+        } else if (container.msRequestFullscreen) {
+          container.msRequestFullscreen();
+        }
       }
       setIsFullscreen(true);
     } else {
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
+      if (doc.exitFullscreen) {
+        doc.exitFullscreen().catch((err: any) => {});
+      } else if (doc.webkitExitFullscreen) {
+        doc.webkitExitFullscreen();
+      } else if (doc.mozCancelFullScreen) {
+        doc.mozCancelFullScreen();
+      } else if (doc.msExitFullscreen) {
+        doc.msExitFullscreen();
       }
       setIsFullscreen(false);
     }
@@ -689,24 +706,41 @@ export default function Cabinet3D({ config }: { config: CabinetConfig }) {
 
   useEffect(() => {
     const handleFsChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const doc = document as any;
+      const isFs = !!(
+        doc.fullscreenElement ||
+        doc.webkitFullscreenElement ||
+        doc.mozFullScreenElement ||
+        doc.msFullscreenElement
+      );
+      setIsFullscreen(isFs);
     };
+
     document.addEventListener('fullscreenchange', handleFsChange);
-    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+    document.addEventListener('webkitfullscreenchange', handleFsChange);
+    document.addEventListener('mozfullscreenchange', handleFsChange);
+    document.addEventListener('MSFullscreenChange', handleFsChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFsChange);
+      document.removeEventListener('webkitfullscreenchange', handleFsChange);
+      document.removeEventListener('mozfullscreenchange', handleFsChange);
+      document.removeEventListener('MSFullscreenChange', handleFsChange);
+    };
   }, []);
 
   return (
     <div 
       ref={containerRef}
-      className={`bg-slate-950 overflow-hidden border border-slate-800 shadow-2xl relative transition-all duration-500 ease-in-out ${
+      className={`bg-slate-950 overflow-hidden border border-slate-800 shadow-2xl relative transition-all duration-300 ease-in-out ${
         isFullscreen 
-          ? 'fixed inset-0 z-[100] rounded-0' 
-          : 'w-full h-[600px] rounded-xl relative z-10'
+          ? 'fixed inset-0 w-full h-screen h-[100dvh] z-[9999] rounded-none border-none p-0 m-0' 
+          : 'w-full h-[450px] sm:h-[600px] rounded-xl relative z-10'
       }`}
     >
       <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
-        <div className="bg-slate-800/80 backdrop-blur-sm p-3 rounded-lg border border-slate-700 text-[10px] text-blue-400 font-mono shadow-xl transition-opacity duration-300">
-          <span className="font-black text-white text-xs mb-1 block uppercase tracking-wider">Estructura Escalada</span>
+        <div className="bg-slate-800/80 backdrop-blur-sm p-2.5 sm:p-3 rounded-lg border border-slate-700 text-[10px] text-blue-400 font-mono shadow-xl transition-opacity duration-300">
+          <span className="font-black text-white text-[10px] sm:text-xs mb-1 block uppercase tracking-wider">Estructura Escalada</span>
           {toFraction(config.width)}" x {toFraction(config.height)}" x {toFraction(config.depth)}"
         </div>
       </div>
@@ -714,12 +748,15 @@ export default function Cabinet3D({ config }: { config: CabinetConfig }) {
       <div className="absolute top-4 right-4 z-[110] flex gap-3">
         <button 
           onClick={toggleFullscreen}
-          className="bg-blue-600 hover:bg-blue-500 text-white p-4 rounded-2xl shadow-xl shadow-blue-900/60 transition-all active:scale-95 group flex items-center gap-3 border border-blue-400/40"
+          className="bg-blue-600 hover:bg-blue-500 text-white p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-xl shadow-blue-900/60 transition-all active:scale-95 group flex items-center gap-2 sm:gap-3 border border-blue-400/40"
           title={isFullscreen ? "Cerrar Pantalla Grande" : "Abrir Pantalla Grande"}
         >
-          {isFullscreen ? <Minimize2 size={28} /> : <Maximize2 size={28} />}
-          <span className="text-sm font-black tracking-widest uppercase">
+          {isFullscreen ? <Minimize2 size={24} className="sm:w-7 sm:h-7" /> : <Maximize2 size={24} className="sm:w-7 sm:h-7" />}
+          <span className="text-sm font-black tracking-widest uppercase hidden sm:inline">
             {isFullscreen ? "Cerrar" : "Pantalla Grande"}
+          </span>
+          <span className="text-xs font-black tracking-widest uppercase sm:hidden">
+            {isFullscreen ? "Cerrar" : "Completa"}
           </span>
         </button>
       </div>
