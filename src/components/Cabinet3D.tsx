@@ -343,7 +343,7 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
                   key={`ap-${i}`} 
                   position={pos as [number, number, number]} 
                   size={[t, h, t]} 
-                  color="#64748b" 
+                  color={pos[2] === 0 ? "#7f1d1d" : "#64748b"} 
                   name="AnnexPost" 
                 />
               ))}
@@ -375,7 +375,7 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
                   key={`awr-${i}`} 
                   position={pos as [number, number, number]} 
                   size={[ad - t, t, t]} 
-                  color="#cbd5e1" 
+                  color={pos[2] === 0 ? "#7f1d1d" : "#cbd5e1"} 
                   name="AnnexWidthRail" 
                 />
               ))}
@@ -508,7 +508,7 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
                 [al/2 - t/2, 0, -ad/2 + t/2],
                 [al/2 - t/2, 0, ad/2 - t/2],
               ].map((pos, i) => (
-                <Piece key={`ap-ext-${i}`} position={pos as [number, number, number]} size={[t, h, t]} color="#64748b" name="AnnexPostExt" />
+                <Piece key={`ap-ext-${i}`} position={pos as [number, number, number]} size={[t, h, t]} color={pos[2] < 0 ? "#7f1d1d" : "#64748b"} name="AnnexPostExt" />
               ))}
 
               {/* Inner Posts (at the union) */}
@@ -516,7 +516,7 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
                 [-al/2 + t/2, 0, -ad/2 + t/2],
                 [-al/2 + t/2, 0, ad/2 - t/2],
               ].map((pos, i) => (
-                <Piece key={`ap-union-${i}`} position={pos as [number, number, number]} size={[t, h, t]} color="#64748b" name="AnnexPostUnion" />
+                <Piece key={`ap-union-${i}`} position={pos as [number, number, number]} size={[t, h, t]} color={pos[2] < 0 ? "#7f1d1d" : "#64748b"} name="AnnexPostUnion" />
               ))}
               
               {/* Inner connecting rails are not needed if we share members, but let's draw them for clarity */}
@@ -527,7 +527,7 @@ function CabinetModel({ config }: { config: CabinetConfig }) {
                 [0, h/2 - t/2, ad/2 - t/2],
                 [0, -h/2 + t/2, ad/2 - t/2],
               ].map((pos, i) => (
-                <Piece key={`awr-p-${i}`} position={pos as [number, number, number]} size={[al - t, t, t]} color="#cbd5e1" name="AnnexWidthRailP" />
+                <Piece key={`awr-p-${i}`} position={pos as [number, number, number]} size={[al - t, t, t]} color={pos[2] < 0 ? "#7f1d1d" : "#cbd5e1"} name="AnnexWidthRailP" />
               ))}
 
               {/* Depth Rails */}
@@ -721,6 +721,17 @@ export default function Cabinet3D({ config }: { config: CabinetConfig }) {
           <span className="text-sm font-black tracking-widest uppercase">
             {isFullscreen ? "Cerrar" : "Pantalla Grande"}
           </span>
+        </button>
+      </div>
+
+      <div className="absolute bottom-4 right-4 z-[110] flex gap-2">
+        <button 
+          onClick={toggleFullscreen}
+          className="bg-slate-900/90 hover:bg-blue-600 text-white p-2.5 rounded-lg border border-slate-700 hover:border-blue-500 shadow-xl transition-all active:scale-95 flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-wider backdrop-blur-sm"
+          title={isFullscreen ? "Cerrar Pantalla Completa" : "Pantalla Completa"}
+        >
+          {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+          <span>{isFullscreen ? "Min" : "F.S."}</span>
         </button>
       </div>
 
