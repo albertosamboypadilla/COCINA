@@ -14,6 +14,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import Cabinet3D from './components/Cabinet3D';
+import Logo from './components/Logo';
 import { CabinetConfig, Project, AnnexConfig } from './types';
 
 interface MainDimensionProps {
@@ -190,27 +191,8 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#0a0a0a] text-slate-200 font-sans flex flex-col">
         <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md p-6">
-          <div className="max-w-7xl mx-auto flex items-center justify-center gap-4">
-            <div className="w-12 h-12 bg-[#1a2333] rounded-xl flex items-center justify-center border border-slate-700/50 shadow-lg p-1">
-              <div className="flex items-end gap-1 h-full w-full relative">
-                <div className="w-1.5 bg-[#2d4694] h-[60%] rounded-t-sm" />
-                <div className="w-1.5 bg-[#b91c1c] h-[90%] rounded-t-sm" />
-                <div className="ml-0.5 relative flex-1 h-full flex items-center justify-center">
-                  <div className="w-full h-1/2 bg-[#2d4694] rounded-sm relative -bottom-1">
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-[#b91c1c] -translate-y-2 rotate-[-30deg] origin-left" />
-                    <div className="absolute top-0 right-0 w-full h-[2px] bg-[#b91c1c] -translate-y-2 rotate-[30deg] origin-right" />
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-3 bg-white rounded-t-[1px]" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col">
-              <h1 className="text-3xl font-[900] italic tracking-tighter uppercase leading-none">
-                <span className="text-[#b91c1c]">HARMONY</span>
-                <span className="text-[#60a5fa] ml-2">GLASS</span>
-              </h1>
-              <p className="text-[10px] text-slate-500 font-mono uppercase tracking-[0.2em] font-bold mt-1 text-center">Sistemas de Aluminio y Vidrio</p>
-            </div>
+          <div className="max-w-7xl mx-auto flex items-center justify-center">
+            <Logo size="lg" />
           </div>
         </header>
 
@@ -245,7 +227,7 @@ export default function App() {
         </main>
 
         <footer className="p-8 text-center text-slate-600 text-[10px] font-mono tracking-widest uppercase">
-          © 2026 Harmony Glass • Herramienta de Ingeniería
+          © 2026 <span className="text-slate-400 font-bold">HARMONY</span> <span className="text-[#ef4444] font-bold">GLASS</span> • CONTROL DE OBRAS
         </footer>
       </div>
     );
@@ -263,26 +245,7 @@ export default function App() {
               >
                 <ArrowLeft size={20} />
               </button>
-              <div className="w-12 h-12 bg-[#1a2333] rounded-xl flex items-center justify-center border border-slate-700/50 shadow-lg p-1">
-                <div className="flex items-end gap-1 h-full w-full relative">
-                  <div className="w-1.5 bg-[#2d4694] h-[60%] rounded-t-sm" />
-                  <div className="w-1.5 bg-[#b91c1c] h-[90%] rounded-t-sm" />
-                  <div className="ml-0.5 relative flex-1 h-full flex items-center justify-center">
-                    <div className="w-full h-1/2 bg-[#2d4694] rounded-sm relative -bottom-1">
-                      <div className="absolute top-0 left-0 w-full h-[2px] bg-[#b91c1c] -translate-y-2 rotate-[-30deg] origin-left" />
-                      <div className="absolute top-0 right-0 w-full h-[2px] bg-[#b91c1c] -translate-y-2 rotate-[30deg] origin-right" />
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-3 bg-white rounded-t-[1px]" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col">
-                <h1 className="text-2xl font-[900] italic tracking-tighter uppercase leading-none">
-                  <span className="text-[#b91c1c]">HARMONY</span>
-                  <span className="text-[#60a5fa] ml-2">GLASS</span>
-                </h1>
-                <p className="text-[9px] text-slate-500 font-mono uppercase tracking-[0.2em] font-bold mt-1">Sistemas de Aluminio y Vidrio</p>
-              </div>
+              <Logo size="md" />
             </div>
           </div>
         </header>
@@ -470,29 +433,17 @@ export default function App() {
             >
               <ArrowLeft size={20} />
             </button>
-            <div className="w-12 h-12 bg-[#1a2333] rounded-xl flex items-center justify-center border border-slate-700/50 shadow-lg p-1">
-              <div className="flex items-end gap-1 h-full w-full relative">
-                <div className="w-1.5 bg-[#2d4694] h-[60%] rounded-t-sm" />
-                <div className="w-1.5 bg-[#b91c1c] h-[90%] rounded-t-sm" />
-                <div className="ml-0.5 relative flex-1 h-full flex items-center justify-center">
-                  <div className="w-full h-1/2 bg-[#2d4694] rounded-sm relative -bottom-1">
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-[#b91c1c] -translate-y-2 rotate-[-30deg] origin-left" />
-                    <div className="absolute top-0 right-0 w-full h-[2px] bg-[#b91c1c] -translate-y-2 rotate-[30deg] origin-right" />
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-3 bg-white rounded-t-[1px]" />
-                  </div>
-                </div>
-              </div>
-            </div>
+            <Logo size="sm" showText={false} />
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-[900] italic tracking-tighter uppercase leading-none">
-                  <span className="text-[#b91c1c]">Harmony</span>
-                  <span className="text-[#60a5fa] ml-2">Glass</span>
+                <h1 className="text-xl font-[900] tracking-tight uppercase leading-none font-sans flex items-center">
+                  <span className="text-white">HARMONY</span>
+                  <span className="text-[#ef4444] ml-2">GLASS</span>
                 </h1>
                 <span className="text-slate-700">|</span>
-                <span className="text-xs font-bold text-blue-400 uppercase tracking-widest">{activeProject?.clientName}</span>
+                <span className="text-xs font-bold text-red-400 uppercase tracking-widest">{activeProject?.clientName}</span>
               </div>
-              <p className="text-[9px] text-slate-500 font-mono uppercase tracking-[0.2em] font-bold mt-1">Sistemas de Aluminio y Vidrio</p>
+              <p className="text-[9px] text-slate-400 font-mono uppercase tracking-[0.22em] font-bold mt-1">CONTROL DE OBRAS</p>
             </div>
           </div>
           
@@ -729,7 +680,7 @@ export default function App() {
       <footer className="mt-12 py-12 border-t border-slate-800 bg-slate-900/30 overflow-hidden relative">
         <div className="max-w-7xl mx-auto px-6 text-center text-slate-500 text-sm">
           <p className="font-bold tracking-tight uppercase">
-            © 2026 <span className="text-[#b91c1c] italic">HARMONY</span> <span className="text-[#60a5fa] italic">GLASS</span> • Sistemas de Aluminio y Vidrio
+            © 2026 <span className="text-white">HARMONY</span> <span className="text-[#ef4444] ml-1">GLASS</span> • CONTROL DE OBRAS
           </p>
           <div className="mt-4 flex justify-center gap-6">
             <span className="hover:text-slate-300 cursor-pointer transition-colors">Documentación</span>
